@@ -126,6 +126,9 @@ create table public.organization_members (
   unique (organization_id, user_id)
 );
 create index organization_members_user_idx on public.organization_members(user_id);
+-- Second FK to profiles (same id as auth.users) so the Data API can embed member names.
+alter table public.organization_members
+  add constraint organization_members_profile_fk foreign key (user_id) references public.profiles(id) on delete cascade;
 create trigger organization_members_updated_at before update on public.organization_members
   for each row execute function app.set_updated_at();
 
