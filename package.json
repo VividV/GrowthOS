@@ -1,0 +1,23 @@
+{
+  "name": "company-platform",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=20.18" },
+  "scripts": {
+    "dev": "pnpm --filter growth-os dev",
+    "dev:web": "pnpm --filter corporate-website dev",
+    "dev:admin": "pnpm --filter platform-admin dev",
+    "build": "pnpm -r --filter './apps/*' build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r --filter './packages/*' --filter growth-os test && pnpm test:db",
+    "test:db": "vitest run --root supabase/tests",
+    "db:reset:local": "node scripts/db-apply.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/pg": "8.23.1",
+    "pg": "8.23.1",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

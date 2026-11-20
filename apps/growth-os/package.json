@@ -1,0 +1,44 @@
+{
+  "name": "growth-os",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@platform/ai-core": "workspace:*",
+    "@platform/analytics": "workspace:*",
+    "@platform/auth": "workspace:*",
+    "@platform/billing": "workspace:*",
+    "@platform/database": "workspace:*",
+    "@platform/notifications": "workspace:*",
+    "@platform/permissions": "workspace:*",
+    "@platform/ui": "workspace:*",
+    "@supabase/supabase-js": "2.119.2",
+    "lucide-react": "0.577.0",
+    "next": "15.5.29",
+    "papaparse": "5.5.3",
+    "react": "19.2.9",
+    "react-dom": "19.2.9",
+    "recharts": "2.15.4",
+    "server-only": "0.0.1",
+    "zod": "3.25.76",
+    "@radix-ui/react-dialog": "1.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/papaparse": "5.5.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "autoprefixer": "10.4.21",
+    "postcss": "8.5.6",
+    "tailwindcss": "3.4.19",
+    "tailwindcss-animate": "1.0.7",
+    "typescript": "5.9.3",
+    "postcss-import": "16.2.0"
+  }
+}
