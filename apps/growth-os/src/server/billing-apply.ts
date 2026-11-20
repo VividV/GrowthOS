@@ -1,7 +1,7 @@
 import "server-only";
 import { getServiceClient } from "@platform/database/service";
 import { fromMinorUnits } from "@platform/billing";
-import { verifyTransaction } from "@platform/billing/paystack";
+import { disableSubscription, verifyTransaction } from "@platform/billing/paystack";
 import { sendEmail, templates } from "@platform/notifications";
 import { capture } from "@platform/analytics";
 import { appUrl } from "./rate-limit";
@@ -16,6 +16,11 @@ export async function verifyAndApply(reference: string, hints: { subscriptionCod
   if (tx.status !== "success") return `not_successful:${tx.status}`;
   const planCode = typeof tx.plan === "string" ? tx.plan : tx.plan?.plan_code ?? null;
   const service = getServiceClient();
+  // Snapshot the current recurring subscription so a plan switch can retire it (prevents double billing).
+  const { data: pending } = await service.from("payment_transactions").select("organization_id").eq("reference", tx.reference).maybeSingle();
+  const { data: prior } = pending
+    ? await service.from("subscriptions").select("paystack_subscription_code, paystack_email_token").eq("organization_id", pending.organization_id).maybeSingle()
+    : { data: null };
   const { data, error } = await service.rpc("billing_apply_charge_success", {
     p_reference: tx.reference,
     p_amount: fromMinorUnits(tx.amount),
@@ -29,6 +34,20 @@ export async function verifyAndApply(reference: string, hints: { subscriptionCod
   });
   if (error) throw new Error(`billing_apply_charge_success failed: ${error.message}`);
   const result = data as string;
+
+  // A new checkout replaced an existing auto-renewing Paystack subscription: disable the old one.
+  const oldCode = prior?.paystack_subscription_code as string | null | undefined;
+  const newCode = hints.subscriptionCode ?? null;
+  if (result === "activated" && oldCode && prior?.paystack_email_token && oldCode !== newCode) {
+    try {
+      await disableSubscription(oldCode, prior.paystack_email_token as string);
+      await service.from("subscriptions").update({ paystack_subscription_code: newCode, paystack_email_token: null }).eq("organization_id", pending!.organization_id);
+      await service.from("audit_logs").insert({ organization_id: pending!.organization_id, actor_type: "system", action: "subscription.previous_disabled", metadata: { old_code: oldCode } });
+    } catch (e) {
+      // Surface for manual follow-up rather than failing the (already applied) payment.
+      await service.from("app_errors").insert({ app: "growth-os", message: `Failed to disable previous Paystack subscription ${oldCode}: ${e instanceof Error ? e.message : e}`, organization_id: pending!.organization_id });
+    }
+  }
 
   if (result === "activated" || result === "renewed") {
     const { data: row } = await service.from("payment_transactions")
