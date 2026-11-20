@@ -9,11 +9,12 @@ import {
   forgotPasswordAction, resendVerificationAction, resetPasswordAction, signInAction, signUpAction,
 } from "@/server/auth-actions";
 
-export function RegisterForm() {
+export function RegisterForm({ next }: { next?: string }) {
   return (
     <ActionForm action={signUpAction} refresh={false} className="space-y-4">
       {({ pending }) => (
         <>
+          <input type="hidden" name="next" value={next ?? ""} />
           <TextField name="fullName" label="Full name" autoComplete="name" required placeholder="Adaeze Okafor" />
           <TextField name="email" label="Email address" type="email" autoComplete="email" inputMode="email" required placeholder="you@business.com" />
           <TextField name="password" label="Password" type="password" autoComplete="new-password" required hint="At least 8 characters with a letter and a number" />
