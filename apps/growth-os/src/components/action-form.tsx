@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useActionState, useEffect, useRef } from "react";
+import { startTransition, useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, toast } from "@platform/ui";
 
@@ -45,7 +45,13 @@ export function ActionForm({
 
   return (
     <FieldErrorsContext.Provider value={state && !state.ok ? state.fieldErrors ?? {} : {}}>
-      <form ref={ref} action={formAction} className={className} noValidate>
+      {/* Submit via a transition instead of <form action>: React 19 resets forms after an action,
+          which would wipe what the user typed when validation fails. */}
+      <form ref={ref} className={className} noValidate onSubmit={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        startTransition(() => formAction(fd));
+      }}>
         {showErrorAlert && state && !state.ok && <Alert tone="danger" className="mb-4">{state.error}</Alert>}
         {typeof children === "function" ? children({ pending, result: state }) : children}
       </form>

@@ -3,14 +3,15 @@ import { RegisterForm } from "../auth-forms";
 
 export const metadata = { title: "Create your account" };
 
-export default function Register() {
+export default async function Register({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  const { next } = await searchParams;
   return (
     <div className="space-y-6">
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Start your free trial</h1>
         <p className="text-sm text-muted-foreground">7 days of full access. No card required, no automatic charges.</p>
       </div>
-      <RegisterForm />
+      <RegisterForm next={next} />
       <p className="text-center text-sm text-muted-foreground">
         Already have an account? <Link href="/login" className="font-medium text-primary">Sign in</Link>
       </p>

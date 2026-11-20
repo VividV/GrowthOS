@@ -18,12 +18,14 @@ export async function signUpAction(_: unknown, fd: FormData): Promise<ActionResu
   let next: string | null = null;
   const res = await runAction(async () => {
     await limitOrFail("signup", 5, 600);
-    const input = registerSchema.parse(formToObject(fd));
+    const raw = formToObject(fd);
+    const input = registerSchema.parse(raw);
+    const after = safeRedirect(raw.next, "/onboarding");
     const supabase = await getServerClient();
     const { data, error } = await supabase.auth.signUp({
       email: input.email,
       password: input.password,
-      options: { data: { full_name: input.fullName }, emailRedirectTo: `${appUrl()}/auth/confirm?next=/onboarding` },
+      options: { data: { full_name: input.fullName }, emailRedirectTo: `${appUrl()}/auth/confirm?next=${encodeURIComponent(after)}` },
     });
     if (error) {
       if (/already registered|already exists/i.test(error.message)) fail("An account with this email already exists. Try signing in.");
@@ -33,7 +35,7 @@ export async function signUpAction(_: unknown, fd: FormData): Promise<ActionResu
     // Supabase returns a user with no identities when the email is already registered (enumeration protection).
     if (data.user && data.user.identities?.length === 0) fail("An account with this email already exists. Try signing in.");
     if (data.user) await capture(data.user.id, "user_signed_up");
-    next = data.session ? "/onboarding" : `/verify-email?email=${encodeURIComponent(input.email)}`;
+    next = data.session ? after : `/verify-email?email=${encodeURIComponent(input.email)}`;
     return null;
   });
   if (res.ok && next) redirect(next);
