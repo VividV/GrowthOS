@@ -21,7 +21,8 @@ export async function middleware(request: NextRequest) {
     if (pathname !== "/") url.searchParams.set("next", pathname + search);
     return NextResponse.redirect(url);
   }
-  if (user && (pathname === "/login" || pathname === "/register")) {
+  // Demo visitors have an anonymous session; they must still be able to reach sign-in / sign-up.
+  if (user && !user.is_anonymous && (pathname === "/login" || pathname === "/register")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
   return response;
